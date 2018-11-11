@@ -1,0 +1,8 @@
+---
+
+- name: Configuring apache2
+  template:
+    src: mpm_prefork.conf
+    dest: /etc
+    owner: root
+    group: root

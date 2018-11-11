@@ -1,0 +1,10 @@
+---
+- hosts: webserver
+  remote_user: root
+  become: yes
+  #gather_facts: False
+  tasks:
+    - name: generate pem key using ssh key
+      apt:
+         name: apache2
+         state: latest

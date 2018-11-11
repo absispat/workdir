@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: generate pem key using ssh key
+      ec2_key:
+         name: cc-interview-abhishek-tester-ubuntu
+         region: ap-south-1
+         key_material: "{{ lookup('file', '~/.ssh/id_rsa.pub')}}"
+         state: present
+

@@ -1,0 +1,119 @@
+---
+- hosts: webserver
+  #connection: local
+  remote_user: root
+  become: yes
+  gather_facts: False
+  vars:
+    domain: example1.com
+    domain1: 000-default.conf
+  tasks:
+          #   - name: apt update
+          #      apt:
+              # update_cache: yes
+              #         upgrade: yes
+    - name: install apache
+      apt:
+         name: apache2
+         state: latest
+         update_cache: yes
+    - name: install mysql
+      apt:
+         name: mysql-server
+         state: latest
+         update_cache: yes
+    - name: install php7.2
+      apt:
+         name: php7.2
+         state: latest
+         update_cache: yes
+    - name: install libapache2-mod-php7.2
+      apt:
+         name: libapache2-mod-php7.2
+         state: latest
+         update_cache: yes
+    - name: install php-mysql
+      apt:
+         name: php-mysql
+         state: latest
+         update_cache: yes
+    - name: Configuring apache2
+      template:
+        src: mpm_prefork.conf
+        dest: /tmp
+        owner: root
+        group: root
+      vars:
+        minSpareServers: 3
+    - name: a2dismod mpm_event    
+      apache2_module:
+        state: absent
+        name: mpm_event
+        ignore_configcheck: True      
+    - name: a2enmod mpm_prefork
+      apache2_module:
+        state: present
+        name: mpm_prefork
+        ignore_configcheck: True
+    - name: Make sure a service is restarted
+      systemd:
+        state: restarted
+        name: apache2
+    - name: Copying example1.com.conf
+      template:
+        src: example1.com.conf
+        dest: /tmp
+        owner: root
+        group: root
+      vars:
+        servername: example1.com
+        serveralias: www.example1.com
+    - name: Create Folder
+      file:
+        path: /var/www/html/example1.com/public_html
+        owner: root
+        group: root
+        mode: 0755
+        state: directory
+        recurse: yes
+    - name: Create Folder logs
+      file:
+        path: /var/www/html/example1.com/logs
+        owner: root
+        group: root
+        mode: 0755
+        state: directory
+        recurse: yes
+    - name: a2ensite {{ domain }}
+      command: a2ensite {{ domain }}
+      notify:
+           - restart apache2
+    - name: a2dissite {{ domain1 }}
+      command: a2dissite {{ domain1 }}
+      notify:
+           - restart apache2
+    - name: pip install pymysql
+      pip:
+        name: PyMySQL
+        state: present       
+    - name: Creating database
+      become: true
+      become_user: root
+      become_method: su
+      #wait_for: timeout=30
+      #      remote_user: root
+      mysql_db: 
+      #name: root1
+        # state: present 
+        # login_user: root
+        #        login_password: 9765719Dd-    
+        # wait_for: timeout=30
+        name: test1
+        state: present
+        login_user: root
+        login_password: "9765719Dd-"
+  handlers:
+    - name: restart apache2
+      systemd: 
+        name: apache2
+        state: restarted
